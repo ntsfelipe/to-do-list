@@ -4,6 +4,9 @@ import './App.css'
 function App() {
   const [showForm, setShowForm] = useState(false)
   const [taskDescription, setTaskDescription] = useState('')
+  const [editingTaskId, setEditingTaskId] = useState(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
   const [taskName, setTaskName] = useState('')
   useEffect(() => {
     async function fetchTasks() {
@@ -22,15 +25,47 @@ function App() {
   )
   }
 
-  function toggleTask(indexToToggle) {
-    setTasks(
-      tasks.map((task, index) => {
-        if (index === indexToToggle) {
-          return { ...task, completed: !task.completed }
-        }
-        return task
-      })
-    )
+  async function updateTask(taskId, newTitle, newDescription) {
+    const response = await fetch(`http://localhost:8080/tasks/${taskId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ title: newTitle, description: newDescription }),
+    })
+    
+    if (response.ok) {
+      const updatedTask = await response.json()
+      setTasks(
+        tasks.map((task) =>
+          task.id === taskId ? updatedTask : task
+        )
+      )
+      setEditingTaskId(null)
+    }
+  }
+
+ async function toggleTask(taskId) {
+    const task = tasks.find((task) => task.id === taskId)
+
+    if (!task) return
+
+    const response = await fetch(`http://localhost:8080/tasks/${taskId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ completed: !task.completed }),
+    })
+    
+    if (response.ok) {
+      const updatedTask = await response.json()
+      setTasks(
+        tasks.map((task, taskIndex) =>
+          task.id === taskId ? updatedTask : task
+        )
+      )
+    }
   }
 
   const completedTasks = tasks.filter(task => task.completed).length
@@ -134,6 +169,42 @@ function App() {
           </form>
         )}
 
+        {editingTaskId !== null && (
+          <form
+            className="task-form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              updateTask(editingTaskId, editTitle, editDescription)
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Digite o nome da tarefa..."
+              value={editTitle}
+              onChange={(event) => setEditTitle(event.target.value)}
+            />
+
+            <textarea
+              placeholder="Descreva sua tarefa..."
+              value={editDescription}
+              onChange={(event) => setEditDescription(event.target.value)}
+            />
+
+            <button type="submit" className="edit-save-button">
+                Atualizar
+              </button>
+
+              <button
+                type="button"
+                className="edit-cancel-button"
+                onClick={() => setEditingTaskId(null)}
+              >
+                Cancelar
+              </button>        
+          </form>
+        )} 
+      
+
      <section className="tasks-container">
         {tasks.length === 0 ? (
           <p className="empty-message">
@@ -149,8 +220,18 @@ function App() {
             </div>
 
             <button
+              className="edit-button"
+              onClick={() => {
+                setEditingTaskId(task.id)
+                setEditTitle(task.title)
+                setEditDescription(task.description || '')
+              }}
+            >
+              Editar
+            </button>
+            <button
               className={`task-name ${task.completed ? 'completed' : ''}`}
-              onClick={() => toggleTask(index)}
+              onClick={() => toggleTask(task.id)}
             >
               {task.completed ? 'Desmarcar' : 'Concluir'}
             </button>

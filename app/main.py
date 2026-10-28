@@ -49,3 +49,4 @@ async def delete_task_route(task_id: str):
     if not deleted_task:
         raise HTTPException(status_code=404, detail="Task not found")
     return {"message": "Task deleted successfully"}
+
