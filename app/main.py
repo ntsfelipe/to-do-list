@@ -1,9 +1,17 @@
 from fastapi import FastAPI, HTTPException
 from app.models.task import Task, TaskCreate
 from app.repositories.task_repository import delete_task, get_task, create_task, get_tasks, update_task
+from fastapi.middleware.cors import CORSMiddleware
 import os
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/health")
 async def health_check():
