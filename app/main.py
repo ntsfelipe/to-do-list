@@ -1,12 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from app.models.task import Task, TaskCreate
 from app.repositories.task_repository import delete_task, get_task, create_task, get_tasks, update_task
+import os
 
 app = FastAPI()
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    return {"status": "ok",
+            "instance": os.getenv("INSTANCE_ID", "local")} 
 
 @app.get("/tasks")
 async def read_tasks():
